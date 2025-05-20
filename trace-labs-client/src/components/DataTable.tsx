@@ -3,19 +3,13 @@ import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     TablePagination, Paper, TextField, Box, TableSortLabel
 } from '@mui/material';
+import type {Data} from '../models';
 
-export interface Data {
-    blockHash: string;
-    blockNumber: string;
-    from: string;
-    to: string;
-    value: string;
-    ethUsed: string;
-}
 
 interface Props {
     data: Data[];
 }
+type ExtendedData = Data & { ethUsed: number };
 
 type Order = 'asc' | 'desc';
 
@@ -29,9 +23,13 @@ const DataTable: React.FC<Props> = ({ data }) => {
         value: '',
     });
 
-    const [orderBy, setOrderBy] = useState<keyof Data>('blockNumber');
+    const [orderBy, setOrderBy] = useState<keyof Data | 'ethUsed'>('blockNumber');
     const [order, setOrder] = useState<Order>('asc');
 
+    const extendedData: ExtendedData[] = data.map((row) => ({
+        ...row,
+        ethUsed: calculateETH(row.value, row.gasUsed, row.gasPrice)
+    }));
     const handleChangePage = (_event: unknown, newPage: number) => {
         setPage(newPage);
     };
@@ -46,27 +44,38 @@ const DataTable: React.FC<Props> = ({ data }) => {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSort = (property: keyof Data) => {
+    const handleSort = (property: keyof ExtendedData) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
     };
 
-    const filteredData = data.filter(row =>
+
+    const filteredData = extendedData.filter(row =>
         row.blockNumber.includes(filters.blockNumber) &&
         row.from.toLowerCase().includes(filters.from.toLowerCase()) &&
-        row.to.toLowerCase().includes(filters.to.toLowerCase()) &&
-        row.value.includes(filters.value)
+        row.to.toLowerCase().includes(filters.to.toLowerCase())
     );
 
     const sortedData = filteredData.sort((a, b) => {
         const aVal = a[orderBy];
         const bVal = b[orderBy];
+
         if (typeof aVal === 'string' && typeof bVal === 'string') {
             return order === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        } else if (typeof aVal === 'number' && typeof bVal === 'number') {
+            return order === 'asc' ? aVal - bVal : bVal - aVal;
         }
+
         return 0;
     });
+
+
+    function calculateETH(value:string,gasUsed:string, gasPrice:string) {
+        const ethValue = Number(value) / Math.pow(10,18);
+        const ethFee = Number(gasUsed) * Number(gasPrice) / Math.pow(10,18);
+        return ethValue + ethFee;
+    }
 
     const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -97,14 +106,14 @@ const DataTable: React.FC<Props> = ({ data }) => {
                     size="small"
                     sx={{ input: { color: 'white' }, label: { color: 'white' } }}
                 />
-                <TextField
-                    label="Value"
-                    name="value"
-                    value={filters.value}
-                    onChange={handleFilterChange}
-                    size="small"
-                    sx={{ input: { color: 'white' }, label: { color: 'white' } }}
-                />
+                {/*<TextField*/}
+                {/*    label="Value"*/}
+                {/*    name="value"*/}
+                {/*    value={filters.value}*/}
+                {/*    onChange={handleFilterChange}*/}
+                {/*    size="small"*/}
+                {/*    sx={{ input: { color: 'white' }, label: { color: 'white' } }}*/}
+                {/*/>*/}
             </Box>
 
             <TableContainer>
@@ -112,12 +121,11 @@ const DataTable: React.FC<Props> = ({ data }) => {
                     <TableHead>
                         <TableRow>
                             {[
-                                { id: 'blockNumber', label: 'Block #' },
+                                { id: 'blockNumber', label: 'Block ' },
                                 { id: 'from', label: 'From' },
                                 { id: 'to', label: 'To' },
                                 { id: 'value', label: 'Value' },
                                 { id: 'ethUsed', label: 'ETH Used' },
-                                { id: 'blockHash', label: 'Block Hash' },
                             ].map((column) => (
                                 <TableCell
                                     key={column.id}
@@ -127,7 +135,7 @@ const DataTable: React.FC<Props> = ({ data }) => {
                                     <TableSortLabel
                                         active={orderBy === column.id}
                                         direction={orderBy === column.id ? order : 'asc'}
-                                        onClick={() => handleSort(column.id as keyof Data)}
+                                        onClick={() => handleSort(column.id as keyof ExtendedData)}
                                         sx={{ color: 'white', '&.Mui-active': { color: 'white' } }}
                                     >
                                         {column.label}
@@ -149,9 +157,9 @@ const DataTable: React.FC<Props> = ({ data }) => {
                                 <TableCell sx={{ color: 'white' }}>{row.blockNumber}</TableCell>
                                 <TableCell sx={{ color: 'white' }}>{row.from}</TableCell>
                                 <TableCell sx={{ color: 'white' }}>{row.to}</TableCell>
-                                <TableCell sx={{ color: 'white' }}>{row.value}</TableCell>
-                                <TableCell sx={{ color: 'white' }}>{row.ethUsed}</TableCell>
-                                <TableCell sx={{ color: 'white' }}>{row.blockHash}</TableCell>
+                                <TableCell sx={{ color: 'white' }}>{Number(row.value) / Math.pow(10,18)} ETH</TableCell>
+                                <TableCell sx={{ color: 'white' }}>{row.ethUsed.toFixed(6)} ETH</TableCell>
+
                             </TableRow>
                         ))}
                         {paginatedData.length === 0 && (

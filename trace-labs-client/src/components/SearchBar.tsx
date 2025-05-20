@@ -4,26 +4,33 @@ import TextField from '@mui/material/TextField';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import InputAdornment from '@mui/material/InputAdornment';
-import React, { useState } from 'react';
-import { fetchTransactions } from '../api/AxiosApi.ts';
+import React, {useEffect, useState} from 'react';
+import {fetchTransactions, fetchValue} from '../api/AxiosApi.ts';
 import type {AxiosError} from "axios";
-
+import DateRangeIcon from '@mui/icons-material/DateRange';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import type {Data, EthBalanceResponse} from '../models';
 interface Props {
-    setResults: (results: any) => void;
+    setResults: (results: { blocks: Data[] } | null) => void;
     setLoading: (loading: boolean) => void;
+    setCardResoults: (res: EthBalanceResponse | null) => void;
 }
-const SearchBar: React.FC<Props> = ({ setResults, setLoading }) => {
+const SearchBar: React.FC<Props> = ({ setResults, setLoading, setCardResoults }) => {
     const [wallet, setWallet] = useState('');
     const [block, setBlock] = useState('');
     const [walletError, setWalletError] = useState(false);
     const [blockError, setBlockError] = useState(false);
+    const [date, setDate] = useState<Date | null>(null);
+    const [dateError, setDateError] = useState(false);
 
-
+    const isValidEthereumAddress = (addr: string): boolean => {
+        return /^0x[a-fA-F0-9]{40}$/.test(addr);
+    };
     const handleSearch = async () => {
         let valid = true;
 
 
-        if (wallet.trim() === '') {
+        if (!isValidEthereumAddress(wallet)) {
             setWalletError(true);
             return;
         } else {
@@ -38,26 +45,60 @@ const SearchBar: React.FC<Props> = ({ setResults, setLoading }) => {
             setBlockError(false);
         }
 
+        if (date && block.trim() !== '') {
+            setDateError(true);
+            valid = false;
+        } else {
+            setDateError(false);
+        }
+
+
         if (!valid) return;
 
         setLoading(true);
 
-        try {
-            const result = await fetchTransactions(wallet, finalBlock);
-            setResults(result);
-        } catch (error) {
-            const err = error as AxiosError;
+        if(!date) {
+            try {
+                const result = await fetchTransactions(wallet, finalBlock);
+                setResults(result);
+            } catch (error) {
+                const err = error as AxiosError;
 
-            if (err.response) {
-                console.error('Greška sa servera:', err.response.data);
-            } else if (err.request) {
-                console.error('Greška u zahtevu:', err.message);
-            } else {
-                console.error('Greška:', err.message);
+                if (err.response) {
+                    console.error('Greška sa servera:', err.response.data);
+                } else if (err.request) {
+                    console.error('Greška u zahtevu:', err.message);
+                } else {
+                    console.error('Greška:', err.message);
+                }
             }
+        }else{
+            try {
+                const dateStart = new Date(date);
+                dateStart.setUTCHours(0, 0, 0, 0);
+                const result = await fetchValue(wallet, dateStart.toISOString());
+                setCardResoults(result);
+            } catch (error) {
+                const err = error as AxiosError;
+
+                if (err.response) {
+                    console.error('Greška sa servera:', err.response.data);
+                } else if (err.request) {
+                    console.error('Greška u zahtevu:', err.message);
+                } else {
+                    console.error('Greška:', err.message);
+                }
+            }
+
         }
         setLoading(false);
     };
+    useEffect(() => {
+        const trimmed = block.trim();
+        const isBlockFilled = /^\d+$/.test(trimmed) && trimmed !== '0';
+        setDateError(Boolean(date && isBlockFilled));
+    }, [date, block]);
+
 
     return (
         <Box
@@ -107,6 +148,26 @@ const SearchBar: React.FC<Props> = ({ setResults, setLoading }) => {
             )
         }
     }}
+    />
+
+    <DatePicker
+        label="Select date"
+        value={date}
+        onChange={(newDate) => setDate(newDate)}
+        slotProps={{
+            textField: {
+                variant: 'standard',
+                error: dateError,
+                helperText: dateError ? 'Date and block can’t be filled at the same time.' : '',
+                InputProps: {
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <DateRangeIcon />
+                        </InputAdornment>
+                    ),
+                },
+            },
+        }}
     />
 
     <Button variant="contained" onClick={handleSearch}>Search</Button>

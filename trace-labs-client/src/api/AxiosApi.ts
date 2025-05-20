@@ -28,3 +28,26 @@ export const fetchTransactions = async (walletAddress: string, startBlock: strin
         return null;
     }
 };
+
+export const fetchValue = async (walletAddress: string, date: string) => {
+    try {
+        const response = await axios.get(BASE_URL+'/api/timestamp', {
+            params: {
+                address: walletAddress,
+                dateStart: date
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        const err = error as AxiosError;
+
+        if (err.response) {
+            console.error('Greška sa servera:', err.response.data);
+        } else {
+            console.error('Greška:', err.message);
+        }
+
+        return null;
+    }
+};
