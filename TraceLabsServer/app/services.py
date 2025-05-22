@@ -37,8 +37,6 @@ def get_txlist_from_Etherscan(address,start_block,end_block):
         print(f"Request failed: {e}")
         return None
 
-    return response["result"]
-
 def get_getblocknobytime_from_Etherscan(timestamp,closest):
 
     print("uslo")
@@ -68,6 +66,7 @@ def get_getblocknobytime_from_Etherscan(timestamp,closest):
         print(f"Request failed: {e}")
         return None
 
+# Couldn't get it to work so i used Infura-s api
 def get_balance_from_Etherscan(address,block_number):
 
     if not address:
@@ -83,7 +82,7 @@ def get_balance_from_Etherscan(address,block_number):
         "module": "account",
         "action": "balance",
         "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-        "tag":  hex(int(19800000 )),
+        "tag":  hex(int(block_number )),
         "apikey":ETHERSCAN_API_KEY
     }
     print(params)
@@ -101,17 +100,6 @@ def get_balance_from_Etherscan(address,block_number):
             return []
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
-        return None
-
-def get_adress_name(address):
-    w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/' + INFIURA_API_KEY))
-    ns = ENS.from_web3(w3)
-    reverse_name = address.lower()[2:] + '.addr.reverse'
-    try:
-        name = ns.reverse_name(reverse_name)
-        return name
-    except Exception as e:
-        print("ENS reverse lookup failed:", e)
         return None
 
 def get_balance(address,block_number):

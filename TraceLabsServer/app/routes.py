@@ -1,36 +1,11 @@
 from flask import Blueprint, request, jsonify
-from app.config import ETHERSCAN_API_KEY
 from app.services import get_txlist_from_Etherscan, get_adress_name, \
-   get_getblocknobytime_from_Etherscan, get_balance_from_Etherscan, get_balance
+   get_getblocknobytime_from_Etherscan, get_balance
 import time
 from datetime import datetime, timezone
 
 
 main = Blueprint("main", __name__)
-@main.route("/api/test", methods=["GET"])
-def test():
-   return jsonify(
-      {
-         "tesst":[
-            "mika"
-         ]
-      }
-   )
-
-@main.route("/api/name", methods=["GET"])
-def get_name():
-   # address = request.args.get("address")
-   address =  "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f"
-
-   if not address:
-      return jsonify({"error": "Address is required"}), 400
-
-   adress_name = get_adress_name(address)
-
-   if adress_name is None:
-      return jsonify({"error": "Adress name not found"}), 400
-
-   return jsonify({"name":adress_name})
 
 @main.route("/api/timestamp", methods=["GET"])
 # We can't see all the blocks on a specific date bcs of the slow api.
@@ -38,11 +13,7 @@ def get_name():
 # We will use only at 00:00:00 UTC
 def get_block_by_date():
    date_str = request.args.get('dateStart')
-   # date_end = request.args.get('dateEnd')
    address = request.args.get("address")
-   # address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
-   # date_str = "2025-04-11T00:00:00.000Z"
-   # date_end = "2025-04-11T23:59:59.000Z"
 
    print(date_str)
    try:
@@ -57,7 +28,6 @@ def get_block_by_date():
 
    balance_eth = get_balance(address, start_block)
 
-
    # for i in range(start_block, end_block):
    #    balance_eth += get_balance(address, i)
    #    print(balance_eth)
@@ -71,9 +41,6 @@ def get_block_by_date():
 
 @main.route("/api/transactions", methods=["GET"])
 def get_transactions_etherscan():
-   # address =  "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f"
-   # address = "0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98"
-   # start_block = 18000000
    address = request.args.get("address")
    start_block = request.args.get("start_block", default=0, type=int)
    end_block = 99999999
@@ -90,7 +57,7 @@ def get_transactions_etherscan():
       return jsonify({"error": data.get("message", "No Transactions")}), 404
 
    last_block = int(data[-1]["blockNumber"])
-   print(f"usao put, velicina: {start_block} {current_start_block} {last_block} {end_block}")
+   # print(f"usao put, velicina: {start_block} {current_start_block} {last_block} {end_block}")
    current_start_block = last_block
 
    while data and int(data[-1]["blockNumber"]) == last_block:
@@ -99,7 +66,6 @@ def get_transactions_etherscan():
    all_data.extend(data)
 
    while current_start_block < end_block:
-      print(" haos lom")
       data = get_txlist_from_Etherscan(address, current_start_block, end_block)
 
       if not data:

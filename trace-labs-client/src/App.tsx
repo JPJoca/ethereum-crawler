@@ -4,7 +4,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { useState } from "react";
+import React, { useState } from "react";
 import { CircularProgress, Box } from '@mui/material';
 import type { Data, EthBalanceResponse } from './models';
 import BasicCard from "./components/BasicCard.tsx";
@@ -34,7 +34,7 @@ function a11yProps(index: number) {
 
 function App() {
     const [results, setResults] = useState<{ blocks: Data[] } | null>(null);
-    const [cardResoults, setCardResoults] = useState<EthBalanceResponse | null>(null);
+    const [cardResoults, setcardResoults] = useState<EthBalanceResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [tabIndex, setTabIndex] = useState(0);
 
@@ -55,13 +55,14 @@ function App() {
                     gap: 4
                 }}
             >
-                <SearchBar setResults={setResults} setLoading={setLoading} setCardResoults={setCardResoults} />
+                <SearchBar setResults={setResults} setLoading={setLoading} setCardResoults={setcardResoults} />
 
-                <Box sx={{ width: '100%' }}>
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                        <Tabs value={tabIndex} onChange={handleChange} aria-label="tabs">
-                            <Tab label="Transactions" {...a11yProps(0)} />
-                            <Tab label="Balance" {...a11yProps(1)} />
+
+                <Box sx={{ maxWidth: '100%' }}>
+                    <Box sx={{ borderBottom: 1, borderColor: 'gray' ,width: 1025, mx: 'auto'}}>
+                        <Tabs  value={tabIndex} onChange={handleChange} aria-label="tabs">
+                            <Tab sx={{color:'white'}} label="Transactions" {...a11yProps(0)} />
+                            <Tab sx={{color:'white'}}  label="Balance" {...a11yProps(1)} />
                         </Tabs>
                     </Box>
 
