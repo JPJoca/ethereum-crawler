@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.services import get_txlist_from_Etherscan, get_adress_name, \
+from app.services import get_txlist_from_Etherscan, \
    get_getblocknobytime_from_Etherscan, get_balance
 import time
 from datetime import datetime, timezone
