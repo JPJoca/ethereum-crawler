@@ -58,4 +58,4 @@ The backend is built with **Python (Flask)**, and the frontend is built using **
 5. Start the React server:
 
    ```bash
-    npm start
+    npm run dev 
